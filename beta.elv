@@ -1,5 +1,6 @@
-use ../v1.0.0+temp1/alpha
+use github.com/giancosta86/epm-plus/v1.0.0+temp1/alpha v1
+use ./alpha
 
 fn g {
-  + 2 alpha:f
+  + v1:f alpha:f
 }
