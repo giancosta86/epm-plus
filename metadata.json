@@ -1,0 +1,9 @@
+{
+  "description": "Smart extensions for EPM",
+
+  "maintainers": ["Gianluca Costa <gianluca@gianlucacosta.info>"],
+
+  "homepage": "https://github.com/giancosta86/epm-plus",
+
+  "dependencies": ["github.com/giancosta86/epm-plus#v1.0.0+test1"]
+}
