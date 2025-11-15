@@ -1,0 +1,7 @@
+{
+  "description": "Package versioning for epm in Elvish",
+
+  "maintainers": ["Gianluca Costa <gianluca@gianlucacosta.info>"],
+
+  "homepage": "https://github.com/giancosta86/epm-plus"
+}
