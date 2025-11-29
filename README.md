@@ -42,6 +42,14 @@ As a plus, this notation is also supported in the `dependencies` list of the **m
 }
 ```
 
+### Effects on metadata.json
+
+**epm-plus** introduces the concept of **metadata-driven install**, which applies when running `epm:install` _without passing packages_: in this case, **epm** will install the dependencies listed _in the metadata descriptor within the current directory_ - failing if such file is missing.
+
+As a plus, in addition to the usual `dependencies` field, the `devDependencies` field is now available - listing all the dependencies that must be installed **only** when performing a _metadata-driven install_.
+
+The rationale for this extension resides in the fact that a library might need _support libraries_ - for example, the [velvet](https://github.com/giancosta86/velvet) testing system - only in contexts like _development_ or **CI/CD**; as a consequence, in lieu of having to _manually install_ such libraries, the `devDependencies` field will satisfy all the requirements in a _standardized_ way, via a simple `epm:install` execution.
+
 ### Effects on epm commands
 
 By design, _epm will work as usual_, with a handful of brand-new _version-oriented_ features:
@@ -64,6 +72,16 @@ By design, _epm will work as usual_, with a handful of brand-new _version-orient
   ```
 
   It is even possible - although not recommended, for cleaner versioning - to install _the default package_ (from the **main** branch) as well as _a specific reference_, which will be stored into _a subdirectory of the former_.
+
+- `epm:install` now supports the idea of _metadata-driven install_ - i.e., when it's called _without packages_ from a directory containing a **metadata.json** descriptor.
+
+  In this case:
+
+  - all the packages listed in `dependencies` are installed, as usual
+
+  - all the packages listed in `devDependencies` are installed as well - and this is _the only case_ where the field is taken into account; in particular, _dev dependencies_ are **never** installed as _transitive dependencies_.
+
+  Of course, if the command is invoked _without packages_ from a directory not containing **metadata.json**, it will fail, as usual.
 
 - `epm:dest` returns:
 

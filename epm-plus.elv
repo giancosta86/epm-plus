@@ -3,6 +3,7 @@ use os
 use re
 use str
 
+var -original-install~ = $epm:install~
 var -domain-config~ = $epm:-domain-config~
 var -info~ = $epm:-info~
 var -method-handler = $epm:-method-handler
@@ -18,6 +19,37 @@ var -version-separator = @
 fn -patched-dest { |pkg|
   str:replace $-version-separator / $pkg |
     put $epm:managed-dir/(all)
+}
+
+fn -get-all-dependencies { |metadata|
+  var all-dependencies = []
+
+  if (has-key $metadata dependencies) {
+    set all-dependencies = [$@all-dependencies (all $metadata[dependencies])]
+  }
+
+  if (has-key $metadata devDependencies) {
+    set all-dependencies = [$@all-dependencies (all $metadata[devDependencies])]
+  }
+
+  put $all-dependencies
+}
+
+fn -patched-install { |&silent-if-installed=$false @pkgs|
+  var actual-packages = (
+    if (not-eq $pkgs []) {
+      put $pkgs
+    } else {
+      if (os:is-regular metadata.json) {
+        from-json < metadata.json |
+          -get-all-dependencies (all)
+      } else {
+        put []
+      }
+    }
+  )
+
+  -original-install &silent-if-installed=$silent-if-installed $@actual-packages
 }
 
 fn -patched-installed {
@@ -119,6 +151,7 @@ fn patch-epm {
   }
 
   set epm:dest~ = $-patched-dest~
+  set epm:install~ = $-patched-install~
   set epm:installed~ = $-patched-installed~
 
   -patch-git-handler
