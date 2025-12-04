@@ -3,7 +3,7 @@ use os
 use path
 use str
 use ./epm-plus
-use ./fake-git
+use github.com/giancosta86/ethereal/v1/fake-git
 
 set epm-plus:git~ = (fake-git:create-command [
   &'https://github.com/giancosta86/epm-plus'=[
