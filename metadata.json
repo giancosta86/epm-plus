@@ -3,5 +3,10 @@
 
   "maintainers": ["Gianluca Costa <gianluca@gianlucacosta.info>"],
 
-  "homepage": "https://github.com/giancosta86/epm-plus"
+  "homepage": "https://github.com/giancosta86/epm-plus",
+
+  "devDependencies": [
+    "github.com/giancosta86/velvet@v1",
+    "github.com/giancosta86/ethereal@v1"
+  ]
 }

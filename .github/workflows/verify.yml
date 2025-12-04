@@ -17,11 +17,6 @@ jobs:
         with:
           elvish-version: 0.21.0
 
-      - shell: elvish {0}
+      - shell: bash
         run: |
-          use epm
-          epm:install github.com/giancosta86/velvet
-
-          use github.com/giancosta86/velvet/main velvet
-
-          velvet:velvet
+          elvish verify.elv
