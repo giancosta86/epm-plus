@@ -125,7 +125,7 @@ fn -patched-git-install { |pkg dom-cfg|
 
   if $git-reference {
     tmp pwd = $dest
-    git checkout $git-reference
+    git checkout --detach $git-reference
   }
 }
 
