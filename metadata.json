@@ -6,7 +6,7 @@
   "homepage": "https://github.com/giancosta86/epm-plus",
 
   "devDependencies": [
-    "github.com/giancosta86/velvet@v1",
+    "github.com/giancosta86/velvet@v3",
     "github.com/giancosta86/ethereal@v1"
   ]
 }
