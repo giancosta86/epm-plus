@@ -76,7 +76,6 @@ By design, _epm will work as usual_, with a handful of brand-new _version-orient
 - `epm:install` now supports the idea of _metadata-driven install_ - i.e., when it's called _without packages_ from a directory containing a **metadata.json** descriptor.
 
   In this case:
-
   - all the packages listed in `dependencies` are installed, as usual
 
   - all the packages listed in `devDependencies` are installed as well - and this is _the only case_ where the field is taken into account; in particular, _dev dependencies_ are **never** installed as _transitive dependencies_.
@@ -84,15 +83,12 @@ By design, _epm will work as usual_, with a handful of brand-new _version-orient
   Of course, if the command is invoked _without packages_ from a directory not containing **metadata.json**, it will fail, as usual.
 
 - `epm:dest` returns:
-
   - for `package-name`: `$epm:managed-dir/package-name`, as usual
 
   - for `package-name@version`: `$epm:managed-dir/package-name/version`
 
 - `epm:list` (as well as `epm:installed`) changes as follows _for Git packages_:
-
   - if the package directory contains _no regular files_ - which means it is merely a package root directory containing **version-related directories**:
-
     - every single subdirectory will be listed, with the format: `<package-name>@<version>`
 
   - otherwise, just `<package-name>` will be displayed, as usual
@@ -100,10 +96,25 @@ By design, _epm will work as usual_, with a handful of brand-new _version-orient
 - `epm:metadata`, in its `src` field, always shows the **package url** _without_ Git reference
 
 - `epm:uninstall` accepts the following package formats:
-
   - `package-name@version`: only _the specific version subdirectory_ will be deleted
 
   - `package-name`: _the entire package directory will be deleted_ - including the version-related sub-directories
+
+### The `link` command
+
+When run inside a project directory also hosting a cloned _Git repository_, creates **a symlink** to it within `$epm:managed-dir`, thus _simulating package installation_ while using _up-to-date scripts_:
+
+```elvish
+git clone <my-project-url> <target-directory>
+cd <target-directory>
+
+use github.com/giancosta86/epm-plus
+epm-plus:link
+```
+
+More in detail, the **package path** is provided by the _Git origin url_, whereas the **version** is provided by the current _Git reference_ (usually a branch).
+
+By default, the symlink is named like the **major** version (e.g.: **v2**) - but the full version (e.g.: **v2.7.1**) can be used instead, via the `full-version` flag.
 
 ## Further references
 

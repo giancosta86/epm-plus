@@ -5,10 +5,10 @@ use str
 use ./epm-plus
 use github.com/giancosta86/ethereal/v1/fake-git
 
-var test-source = 'https://github.com/giancosta86/epm-plus-test'
+var test-source-url = 'https://github.com/giancosta86/epm-plus-test'
 
 var git~ = (fake-git:create-command [
-  &$test-source=[
+  &$test-source-url=[
     &main=[
       &'main.elv'='#This is a placeholder for the actual source code'
     ]
@@ -383,6 +383,48 @@ fn get-test-package-list {
           has-value $post-install-packages $dev-dependency |
             should-be $true
         }
+      }
+    }
+  }
+
+  >> 'creating link' {
+    >> 'by default' {
+      fs:with-temp-dir { |temp-dir|
+        git clone $test-source-url $temp-dir
+
+        cd $temp-dir
+
+        git checkout v2.0.0
+
+        epm-plus:link
+
+        cd
+
+        path:join $epm:managed-dir github.com giancosta86 epm-plus-test v2 |
+          cd (all)
+
+        put $pwd |
+          should-be $temp-dir
+      }
+    }
+
+    >> 'when requesting the full version' {
+      fs:with-temp-dir { |temp-dir|
+        git clone $test-source-url $temp-dir
+
+        cd $temp-dir
+
+        git checkout v2.0.0
+
+        epm-plus:link &full-version
+
+        cd
+
+        path:join $epm:managed-dir github.com giancosta86 epm-plus-test v2.0.0 |
+          cd (all)
+
+        put $pwd |
+          should-be $temp-dir
       }
     }
   }
