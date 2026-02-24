@@ -1,5 +1,6 @@
 use epm
 use os
+use path
 use re
 use str
 
@@ -157,4 +158,54 @@ fn patch-epm {
   -patch-git-handler
 
   set -patched = $true
+}
+
+#
+# When run inside a project directory also hosting a cloned Git repository, creates a symlink to it within `$epm:managed-dir`, thus simulating package installation while using up-to-date scripts.
+#
+# More in detail, the **package path** is provided by the *Git origin url*, whereas the **version** is provided by the current *Git reference* (usually a branch).
+#
+# By default, the symlink is named like the **major** version (e.g.: **v2**) - but the full version (e.g.: **v2.7.1**) can be used instead, via the `full-version` flag.
+#
+fn link { |&full-version=$false|
+  var full-origin-url = (
+    try {
+      git remote get-url origin 2>$os:dev-null
+    } catch {
+      fail 'Not in a Git repository!'
+    }
+  )
+
+  var origin-url = (
+    put $full-origin-url |
+      str:trim-prefix (all) 'git@' |
+      str:trim-prefix (all) 'https://' |
+      str:trim-suffix (all) '.git'
+  )
+
+  var package-subdir = (str:replace ':' '/' $origin-url)
+
+  var package-dir = (path:join $epm:managed-dir $package-subdir)
+
+  var reference = (
+    try {
+      git rev-parse --abbrev-ref HEAD 2>$os:dev-null
+    } catch {
+      fail 'Cannot retrieve the current Git reference!'
+    }
+  )
+
+  var link-name = (
+    if $full-version {
+      put $reference
+    } else {
+      put [(str:split . $reference)][0]
+    }
+  )
+
+  var link-path = (path:join $package-dir $link-name)
+
+  os:mkdir-all $package-dir
+
+  os:symlink $pwd $link-path
 }
