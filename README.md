@@ -2,7 +2,9 @@
 
 _Package versioning for epm in Elvish_
 
-**epm-plus** is a minimalist but effective library, designed to support _multiple coexisting versions_ of Elvish packages - especially from _Git repositories_ - following the simple set of rules described below; the changes introduced are _fully backwards-compatible_, enabling users to _choose their favorite versioning style_.
+![Logo](./logo.jpg)
+
+**epm-plus** is a tiny library designed to support _multiple coexisting versions_ of Elvish packages - especially from _Git repositories_ - following the simple set of rules described below; the changes introduced are _fully backwards-compatible_, enabling users to _choose their favorite versioning style_.
 
 ## Installation
 
@@ -22,7 +24,7 @@ use github.com/giancosta86/epm-plus/epm-plus
 epm-plus:patch-epm
 ```
 
-**Please, note**: patching epm will _not_ alter the standard package provided by Elvish - only its in-memory representation! As a consequence, you'll need to _run this command whenever you start a shell_ - especially by adding the lines in the previous snippet to the `rc.elv` file.
+**Please, note**: patching epm will _not_ alter the standard module provided by Elvish - only its in-memory representation! As a consequence, you'll need to _run this command whenever you start a shell_ - especially by adding the lines in the previous snippet to your `rc.elv` file.
 
 ## Usage
 
@@ -31,18 +33,19 @@ For **Git-based packages**, one can now use `package-name@git-reference` in `epm
 For example:
 
 ```elvish
-epm:install github.com/giancosta86/epm-plus@v1.0.0+test2
+epm:install github.com/giancosta86/velvet@v3
 ```
 
-As a plus, this notation is also supported in the `dependencies` list of the **metadata.json** package descriptor:
+As a plus, this notation is also supported in the `dependencies` and `devDependencies` lists of the **metadata.json** package descriptor:
 
 ```json
 {
-  "dependencies": ["github.com/giancosta86/epm-plus@v1.0.0+test1"]
+  "dependencies": ["github.com/giancosta86/ethereal@v1"]
+  "devDependencies": ["github.com/giancosta86/velvet@v3"]
 }
 ```
 
-### Effects on metadata.json
+### Metadata-driven install
 
 **epm-plus** introduces the concept of **metadata-driven install**, which applies when running `epm:install` _without passing packages_: in this case, **epm** will install the dependencies listed _in the metadata descriptor within the current directory_ - failing if such file is missing.
 
@@ -58,7 +61,7 @@ By design, _epm will work as usual_, with a handful of brand-new _version-orient
 
   Therefore, installing `package@v2` will create a sibling `v2` subdirectory.
 
-  To access either package from anywhere:
+  To access both packages from anywhere:
 
   ```elvish
   use package-name/v1/some-module v1
@@ -68,7 +71,13 @@ By design, _epm will work as usual_, with a handful of brand-new _version-orient
   One version can even access the other - for example, a script within **v2**'s root could contain:
 
   ```elvish
-  use ../v1/some-module v1
+  use package-name/v1/some-module
+  ```
+
+  or even (although more fragile):
+
+  ```elvish
+  use ../v1/some-module
   ```
 
   It is even possible - although not recommended, for cleaner versioning - to install _the default package_ (from the **main** branch) as well as _a specific reference_, which will be stored into _a subdirectory of the former_.
@@ -83,7 +92,7 @@ By design, _epm will work as usual_, with a handful of brand-new _version-orient
   Of course, if the command is invoked _without packages_ from a directory not containing **metadata.json**, it will fail, as usual.
 
 - `epm:dest` returns:
-  - for `package-name`: `$epm:managed-dir/package-name`, as usual
+  - for `package-name`: `$epm:managed-dir/package-name`, just as expected
 
   - for `package-name@version`: `$epm:managed-dir/package-name/version`
 
@@ -98,11 +107,11 @@ By design, _epm will work as usual_, with a handful of brand-new _version-orient
 - `epm:uninstall` accepts the following package formats:
   - `package-name@version`: only _the specific version subdirectory_ will be deleted
 
-  - `package-name`: _the entire package directory will be deleted_ - including the version-related sub-directories
+  - `package-name`: _the entire package directory will be deleted_ - including any version-related sub-directory.
 
 ### The `link` command
 
-When run inside a project directory also hosting a cloned _Git repository_, creates **a symlink** to it within `$epm:managed-dir`, thus _simulating package installation_ while using _up-to-date scripts_:
+When executed inside a project directory also hosting a cloned _Git repository_, creates **a symlink** to such directory within `$epm:managed-dir`, thus _simulating package installation_ while using _work-in-progress scripts_:
 
 ```elvish
 git clone <my-project-url> <target-directory>
@@ -115,6 +124,12 @@ epm-plus:link
 More in detail, the **package path** is provided by the _Git origin url_, whereas the **version** is provided by the current _Git reference_ (usually a branch).
 
 By default, the symlink is named like the **major** version (e.g.: **v2**) - but the full version (e.g.: **v2.7.1**) can be used instead, via the `full-version` flag.
+
+**Please, note**: although this command creates a symlink, you'll also need to _reload the in-memory module instance_ after any change - for example, by restarting the Elvish shell.
+
+## Credits
+
+Logo image generated by **Gemini** and manually edited with **GIMP**.
 
 ## Further references
 

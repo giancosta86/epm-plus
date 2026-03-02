@@ -5,7 +5,13 @@ use str
 use ./epm-plus
 use github.com/giancosta86/ethereal/v1/fake-git
 
-var test-source-url = 'https://github.com/giancosta86/epm-plus-test'
+var test-package = 'github.com/giancosta86/epm-plus-test'
+
+var test-source-url = 'https://'$test-package
+
+var test-package-root = (path:join $epm:managed-dir (str:split / $test-package))
+
+var test-package-components = [(str:split / $test-package)]
 
 var git~ = (fake-git:create-command [
   &$test-source-url=[
@@ -28,9 +34,9 @@ var git~ = (fake-git:create-command [
 
         "maintainers": ["Gianluca Costa <gianluca@gianlucacosta.info>"],
 
-        "homepage": "https://github.com/giancosta86/epm-plus-test",
+        "homepage": "'$test-source-url'",
 
-        "dependencies": ["github.com/giancosta86/epm-plus-test@v1.0.0"]
+        "dependencies": ["'$test-package'@v1.0.0"]
       }
       '
 
@@ -43,13 +49,17 @@ var git~ = (fake-git:create-command [
       '
 
       &'beta.elv'='
-        use github.com/giancosta86/epm-plus-test/v1.0.0/alpha v1
+        use '$test-package'/v1.0.0/alpha v1
         use ./alpha
 
         fn g {
           + (v1:f) (alpha:f)
         }
       '
+    ]
+
+    &'v3.0.0'=[
+      &'special.elv'='Only used as an additional standalone version'
     ]
   ]
 ])
@@ -59,294 +69,302 @@ set epm-plus:git~ = $git~
 epm-plus:patch-epm
 
 var within-test-install~ = (
-  var test-root = (path:join $epm:managed-dir github.com giancosta86 epm-plus-test)
-
   var active-blocks = 0
 
-  put { |&reference=$nil block|
+  fn remove-package-root-if-no-active-blocks {
     if (== $active-blocks 0) {
-      os:remove-all $test-root
+      os:remove-all $test-package-root
     }
+  }
+
+  put { |&reference=$nil block|
+    remove-package-root-if-no-active-blocks
 
     set active-blocks = (+ $active-blocks 1)
 
     defer {
       set active-blocks = (- $active-blocks 1)
 
-      if (== $active-blocks 0) {
-        os:remove-all $test-root
-      }
+      remove-package-root-if-no-active-blocks
     }
 
-    var pkg = (
+    var reference-suffix = (
       if $reference {
-        put github.com/giancosta86/epm-plus-test@$reference
+        put '@'$reference
       } else {
-        put github.com/giancosta86/epm-plus-test
+        put ''
       }
     )
 
-    epm:install $pkg
+    epm:install $test-package''$reference-suffix
 
     {
-      tmp pwd = (epm:dest $pkg)
+      tmp pwd = (path:join $test-package-root (coalesce $reference ''))
       $block
     }
   }
 )
 
-fn get-test-package-list {
+fn get-test-package-entries {
   epm:list |
-    keep-if { |entry| str:has-prefix $entry github.com/giancosta86/epm-plus-test } |
-    order |
-    put [(all)]
+    keep-if { |entry| str:has-prefix $entry $test-package } |
+    order
 }
 
->> 'In epm-plus' {
-  >> 'splitting package name and version' {
-    >> 'without version' {
-      epm-plus:-split-package-name-and-version 'github.com/giancosta86/epm-plus-test' |
-        put [(all)] |
-        should-be [
-          'github.com/giancosta86/epm-plus-test'
-          $nil
-        ]
-    }
-
-    >> 'with version' {
-      epm-plus:-split-package-name-and-version 'github.com/giancosta86/epm-plus-test@v1.0.0' |
-        put [(all)] |
-        should-be [
-          'github.com/giancosta86/epm-plus-test'
-          'v1.0.0'
-        ]
-    }
+>> 'Splitting package name and version' {
+  >> 'without version' {
+    epm-plus:-split-package-name-and-version $test-package |
+      should-emit [
+        $test-package
+        $nil
+      ]
   }
 
-  >> 'computing the destination directory of a package' {
-    >> 'without version' {
-      epm:dest github.com/giancosta86/epm-plus-test |
-        should-be (path:join $epm:managed-dir github.com giancosta86 epm-plus-test)
-    }
+  >> 'with version' {
+    epm-plus:-split-package-name-and-version $test-package@v1.0.0 |
+      should-emit [
+        $test-package
+        'v1.0.0'
+      ]
+  }
+}
 
-    >> 'with version' {
-      epm:dest github.com/giancosta86/epm-plus-test@v2.0.0 |
-        should-be (path:join $epm:managed-dir github.com giancosta86 epm-plus-test v2.0.0)
-    }
+>> 'Computing the destination directory of a package' {
+  >> 'without version' {
+    epm:dest $test-package |
+      should-be $test-package-root
   }
 
-  >> 'installing from a Git repository' {
-    >> 'when requesting no specific reference' {
-      >> 'should perform a basic clone from main' {
-        within-test-install {
-          os:is-regular main.elv |
-            should-be $true
-        }
-      }
-    }
+  >> 'with version' {
+    epm:dest $test-package@v2.0.0 |
+      should-be (path:join $test-package-root v2.0.0)
+  }
+}
 
-    >> 'when requesting a standalone reference' {
-      within-test-install &reference=v1.0.0 {
-        >> 'should clone that reference' {
-          os:is-regular main.elv |
-            should-be $false
-
-          os:is-regular alpha.elv |
-            should-be $true
-        }
-
-        >> 'should not include the reference in the metadata src field' {
-          epm:metadata github.com/giancosta86/epm-plus-test@v1.0.0 |
-            put (all)[src] |
-            should-be https://github.com/giancosta86/epm-plus-test
-        }
-      }
-    }
-
-    >> 'when installing a reference depending on another' {
-      within-test-install &reference=v2.0.0 {
-        >> 'the 2 reference directories should coexist' {
-          os:is-regular alpha.elv |
-            should-be $true
-
-          os:is-regular beta.elv |
-            should-be $true
-
-          var test1-dest = (epm:dest github.com/giancosta86/epm-plus-test@v1.0.0)
-
-          os:is-dir $test1-dest |
-            should-be $true
-
-          path:join $test1-dest alpha.elv |
-            os:is-regular (all) |
-            should-be $true
-        }
-
-        >> 'one reference scripts should be callable from the other' {
-          use github.com/giancosta86/epm-plus-test/v1.0.0/alpha v1
-
-          use github.com/giancosta86/epm-plus-test/v2.0.0/alpha
-          use github.com/giancosta86/epm-plus-test/v2.0.0/beta
-
-          v1:f |
-            should-be 90
-
-          alpha:f |
-            should-be 5
-
-          beta:g |
-            should-be 95
-        }
+>> 'Installing from a Git repository' {
+  >> 'when requesting no specific reference' {
+    >> 'should perform a basic clone from main' {
+      within-test-install {
+        put main.elv |
+          should-be-regular
       }
     }
   }
 
-  >> 'getting all the dependencies from metadata' {
-    >> 'should list both dependencies and dev dependencies' {
-      var metadata = [
-        &dependencies=[alpha beta gamma]
-        &devDependencies=[delta epsilon]
+  >> 'when requesting a standalone reference' {
+    within-test-install &reference=v1.0.0 {
+      >> 'should Git-checkout that reference' {
+        put main.elv |
+          should-not-be-regular
+
+        put alpha.elv |
+          should-be-regular
+      }
+
+      >> 'should not include the reference in the metadata src field' {
+        epm:metadata $test-package@v1.0.0 |
+          put (all)[src] |
+          should-be $test-source-url
+      }
+    }
+  }
+
+  >> 'when installing a reference depending on another' {
+    within-test-install &reference=v2.0.0 {
+      >> 'should install both versions, each in its own directory' {
+        all [
+          alpha.elv
+          beta.elv
+        ] |
+          should-be-regular
+
+        var test1-dest = (path:join $test-package-root v1.0.0)
+
+        put $test1-dest |
+          should-be-dir
+
+        path:join $test1-dest alpha.elv |
+          should-be-regular
+      }
+
+      >> 'both package versions should be available and callable' {
+        var v1: = (use-mod $test-package/v1.0.0/alpha)
+
+        var alpha: = (use-mod $test-package/v2.0.0/alpha)
+        var beta: = (use-mod $test-package/v2.0.0/beta)
+
+        v1:f |
+          should-be 90
+
+        alpha:f |
+          should-be 5
+
+        beta:g |
+          should-be 95
+      }
+    }
+  }
+}
+
+>> 'Getting all the dependencies from metadata' {
+  >> 'should list both dependencies and dev dependencies' {
+    var metadata = [
+      &dependencies=[
+        alpha
+        beta
+        gamma
       ]
 
-      epm-plus:-get-all-dependencies $metadata |
-        should-be [alpha beta gamma delta epsilon]
+      &devDependencies=[
+        delta
+        epsilon
+      ]
+    ]
+
+    epm-plus:-get-all-dependencies $metadata |
+      should-emit [
+        alpha
+        beta
+        gamma
+        delta
+        epsilon
+      ]
+  }
+}
+
+>> 'Listing Git packages' {
+  >> 'when only the package without reference is installed' {
+    >> 'should list just the package name' {
+      within-test-install {
+        get-test-package-entries |
+          should-emit [
+            $test-package
+          ]
+      }
     }
   }
 
-  >> 'listing Git packages' {
-    >> 'when only the base reference is installed' {
-      >> 'should list just the package name' {
-        within-test-install {
-          get-test-package-list |
-            should-be [
-              github.com/giancosta86/epm-plus-test
-            ]
-        }
+  >> 'when only a single reference is installed' {
+    >> 'should list the reference' {
+      within-test-install &reference=v1.0.0 {
+        get-test-package-entries |
+          should-emit [
+            $test-package@v1.0.0
+          ]
       }
     }
+  }
 
-    >> 'when a single reference is installed' {
-      >> 'should list the package name with the reference' {
+  >> 'when a reference installs another as a dependency' {
+    >> 'should list both references' {
+      within-test-install &reference=v2.0.0 {
+        get-test-package-entries |
+          should-emit [
+            $test-package@v1.0.0
+            $test-package@v2.0.0
+          ]
+      }
+    }
+  }
+
+  >> 'when the base version and a reference are installed' {
+    >> 'should list just the package name' {
+      within-test-install {
         within-test-install &reference=v1.0.0 {
-          get-test-package-list |
-            should-be [
-              github.com/giancosta86/epm-plus-test@v1.0.0
+          get-test-package-entries |
+            should-emit [
+              $test-package
             ]
-        }
-      }
-    }
-
-    >> 'when a reference installs another as a dependency' {
-      >> 'should list both full packages' {
-        within-test-install &reference=v2.0.0 {
-          get-test-package-list |
-            should-be [
-              github.com/giancosta86/epm-plus-test@v1.0.0
-              github.com/giancosta86/epm-plus-test@v2.0.0
-            ]
-        }
-      }
-    }
-
-    >> 'when the base version and a reference are installed' {
-      >> 'should list just the package name' {
-        within-test-install {
-          within-test-install &reference=v1.0.0 {
-            get-test-package-list |
-              should-be [
-                github.com/giancosta86/epm-plus-test
-              ]
-          }
         }
       }
     }
   }
+}
 
-  >> 'uninstalling a Git package' {
-    >> 'when the Git reference is specified' {
-      >> 'the other references should remain' {
+>> 'Uninstalling a Git package' {
+  >> 'when the Git reference is specified' {
+    >> 'the references it depends on should remain' {
+      within-test-install &reference=v2.0.0 {
+        cd ..
+
+        epm:uninstall $test-package@v2.0.0
+
+        put v2.0.0 |
+          should-not-be-dir
+
+        put v1.0.0 |
+          should-be-dir
+      }
+    }
+
+    >> 'when removing the dependencies, too' {
+      >> 'the package should no more be listed' {
         within-test-install &reference=v2.0.0 {
           cd ..
 
-          epm:uninstall github.com/giancosta86/epm-plus-test@v2.0.0
+          epm:uninstall $test-package@v2.0.0
+          epm:uninstall $test-package@v1.0.0
 
-          os:is-dir v2.0.0 |
-            should-be $false
-
-          os:is-dir v1.0.0 |
-            should-be $true
-        }
-      }
-
-      >> 'when removing the other reference, too' {
-        >> 'the package should no more be listed' {
-          within-test-install &reference=v2.0.0 {
-            cd ..
-
-            epm:uninstall github.com/giancosta86/epm-plus-test@v1.0.0
-            epm:uninstall github.com/giancosta86/epm-plus-test@v2.0.0
-
-            get-test-package-list |
-              should-be []
-          }
-        }
-      }
-    }
-
-    >> 'when no Git reference is specified' {
-      >> 'the entire package directory should be deleted' {
-        within-test-install &reference=v2.0.0 {
-          cd (path:join $epm:managed-dir github.com giancosta86)
-
-          epm:uninstall github.com/giancosta86/epm-plus-test
-
-          os:is-dir epm-plus-test |
-            should-be $false
+          get-test-package-entries |
+            should-emit []
         }
       }
     }
   }
 
-  >> 'installing without passing packages' {
-    var temp-dir = (os:temp-dir)
+  >> 'when no Git reference is specified' {
+    >> 'the entire package root should be deleted' {
+      within-test-install &reference=v2.0.0 {
+        all $test-package-components[..-1] |
+          path:join $epm:managed-dir (all) |
+          cd (all)
 
-    cd $temp-dir
+        epm:uninstall $test-package
 
-    defer {
-      cd (path:dir $temp-dir)
-      os:remove-all $temp-dir
-    }
-
-    >> 'when the metadata descriptor is missing' {
-      >> 'should display an error' {
-        epm:install |
-          str:contains (all) 'You must specify at least one package.' |
-            should-be $true
+        put $test-package-components[-1] |
+          should-not-be-dir
       }
     }
+  }
+}
 
-    >> 'when the metadata descriptor is present' {
+>> 'Installing without passing packages' {
+  var no-packages-error = 'You must specify at least one package.'
+
+  >> 'when the metadata descriptor is missing' {
+    fs:with-temp-dir { |temp-dir|
+      cd $temp-dir
+
+      epm:install |
+        should-contain $no-packages-error
+    }
+  }
+
+  >> 'when the metadata descriptor is present' {
+    fs:with-temp-dir { |temp-dir|
+      cd $temp-dir
+
       var metadata = [
-        &description='Test package'
-        &dependencies=['github.com/giancosta86/epm-plus-test@v2.0.0']
-        &devDependencies=['github.com/giancosta86/epm-plus-test@v1.0.0']
+        &description='Yet another package'
+        &dependencies=[$test-package@v1.0.0]
+        &devDependencies=[$test-package@v3.0.0]
       ]
 
-      var all-dependencies = (epm-plus:-get-all-dependencies $metadata)
+      var all-dependencies = [(epm-plus:-get-all-dependencies $metadata)]
 
       put $metadata |
         to-json > metadata.json
 
-      var pre-install-packages = [(epm:list)]
+      var packages-before-install = [(epm:list)]
 
       all $metadata[dependencies] | each { |dependency|
-        if (has-value $pre-install-packages $dependency) {
+        if (has-value $packages-before-install $dependency) {
           fail 'Dependency '$dependency' already installed! The test would be pointless!'
         }
       }
 
       all $metadata[devDependencies] | each { |dev-dependency|
-        if (has-value $pre-install-packages $dev-dependency) {
+        if (has-value $packages-before-install $dev-dependency) {
           fail 'Dev dependency '$dev-dependency' already installed! The test would be pointless!'
         }
       }
@@ -354,78 +372,61 @@ fn get-test-package-list {
       var install-output = (epm:install | slurp)
 
       defer {
-        all $metadata[dependencies] | each { |dependency|
-          epm:uninstall $dependency
-        }
+        all $metadata[dependencies] | each $epm:uninstall~
 
-        all $metadata[devDependencies] | each { |dev-dependency|
-          epm:uninstall $dev-dependency
-        }
+        all $metadata[devDependencies] | each $epm:uninstall~
       }
 
-      var post-install-packages = [(epm:list)]
+      var packages-after-install = [(epm:list)]
 
-      >> 'should display no error' {
+      >> 'should display no error for lack of packages' {
         put $install-output |
-          str:contains (all) 'You must specify at least one package.' |
-            should-be $false
+          should-not-contain $no-packages-error
       }
 
       >> 'should make the dependencies available' {
         all $metadata[dependencies] | each { |dependency|
-          has-value $post-install-packages $dependency |
-            should-be $true
+          put $packages-after-install |
+            should-contain $dependency
         }
       }
 
       >> 'should make the dev dependencies available' {
         all $metadata[devDependencies] | each { |dev-dependency|
-          has-value $post-install-packages $dev-dependency |
-            should-be $true
+          put $packages-after-install |
+            should-contain $dev-dependency
         }
       }
     }
   }
+}
 
-  >> 'creating link' {
+>> 'Creating link' {
+  fs:with-temp-dir { |temp-dir|
+    git clone $test-source-url $temp-dir
+
+    cd $temp-dir
+
+    git checkout v2.0.0
+
     >> 'by default' {
-      fs:with-temp-dir { |temp-dir|
-        git clone $test-source-url $temp-dir
+      epm-plus:link
 
-        cd $temp-dir
+      path:join $epm:managed-dir (all $test-package-components) v2 |
+        cd (all)
 
-        git checkout v2.0.0
-
-        epm-plus:link
-
-        cd
-
-        path:join $epm:managed-dir github.com giancosta86 epm-plus-test v2 |
-          cd (all)
-
-        put $pwd |
-          should-be $temp-dir
-      }
+      put $pwd |
+        should-be $temp-dir
     }
 
-    >> 'when requesting the full version' {
-      fs:with-temp-dir { |temp-dir|
-        git clone $test-source-url $temp-dir
+    >> 'when requesting a full-version link' {
+      epm-plus:link &full-version
 
-        cd $temp-dir
+      path:join $epm:managed-dir (all $test-package-components) v2.0.0 |
+        cd (all)
 
-        git checkout v2.0.0
-
-        epm-plus:link &full-version
-
-        cd
-
-        path:join $epm:managed-dir github.com giancosta86 epm-plus-test v2.0.0 |
-          cd (all)
-
-        put $pwd |
-          should-be $temp-dir
-      }
+      put $pwd |
+        should-be $temp-dir
     }
   }
 }

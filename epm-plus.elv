@@ -23,17 +23,13 @@ fn -patched-dest { |pkg|
 }
 
 fn -get-all-dependencies { |metadata|
-  var all-dependencies = []
-
   if (has-key $metadata dependencies) {
-    set all-dependencies = (conj $all-dependencies (all $metadata[dependencies]))
+    all $metadata[dependencies]
   }
 
   if (has-key $metadata devDependencies) {
-    set all-dependencies = (conj $all-dependencies (all $metadata[devDependencies]))
+    all $metadata[devDependencies]
   }
-
-  put $all-dependencies
 }
 
 fn -patched-install { |&silent-if-installed=$false @pkgs|
@@ -43,7 +39,7 @@ fn -patched-install { |&silent-if-installed=$false @pkgs|
     } else {
       if (os:is-regular metadata.json) {
         from-json < metadata.json |
-          -get-all-dependencies (all)
+          put [(-get-all-dependencies (all))]
       } else {
         put []
       }
