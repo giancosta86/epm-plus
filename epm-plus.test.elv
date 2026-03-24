@@ -155,7 +155,7 @@ fn get-test-package-entries {
     within-test-install &reference=v1.0.0 {
       >> 'should Git-checkout that reference' {
         put main.elv |
-          should-not-be-regular
+          should-not-exist
 
         put alpha.elv |
           should-be-regular
