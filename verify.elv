@@ -5,6 +5,6 @@ epm-plus:patch-epm
 
 epm:install
 
-use github.com/giancosta86/velvet/v3/velvet
+use github.com/giancosta86/velvet/v4/velvet
 
-velvet:velvet &must-pass
+velvet:velvet &flawless
