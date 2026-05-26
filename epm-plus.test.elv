@@ -290,10 +290,10 @@ fn get-test-package-entries {
         epm:uninstall $test-package@v2.0.0
 
         put v2.0.0 |
-          should-not-be-dir
+          should-not-exist
 
         put v1.0.0 |
-          should-be-dir
+          should-exist
       }
     }
 
@@ -322,7 +322,7 @@ fn get-test-package-entries {
         epm:uninstall $test-package
 
         put $test-package-components[-1] |
-          should-not-be-dir
+          should-not-exist
       }
     }
   }
