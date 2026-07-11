@@ -30,8 +30,7 @@ runs:
           get-env packages |
             str:split , (all) |
             each $str:trim-space~ |
-            keep-if { |entry| not-eq $entry '' } |
-            keep-if { |package| not (epm:is-installed $package) }
+            keep-if { |entry| not-eq $entry '' }
         )]
 
         if (eq $packages []) {
