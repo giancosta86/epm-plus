@@ -34,12 +34,16 @@ runs:
         )]
 
         if (eq $packages []) {
-          echo '📜 No packages requested. Performing metadata-driven install in working directory'
+          epm:install
         } else {
-          echo '📦 Requested packages:'
-          pprint $packages
-        }
+          var actual-packages = [(
+            all $packages |
+              keep-if { |package| not (epm:is-installed $package) }
+          )]
 
-        epm:install $@packages
+          if (not-eq $actual-packages []) {
+            epm:install $@actual-packages
+          }
+        }
       env:
         packages: ${{ inputs.packages }}

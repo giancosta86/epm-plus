@@ -16,7 +16,7 @@ steps:
 1. Patch `epm` with **epm-plus**.
 
 1. Consider what to install:
-   1. If at least one comma-separated package has been specified, install the required packages via the patched `epm:install`.
+   1. If at least one comma-separated package has been specified, install the required packages via the patched `epm:install` - actually installing only the ones that are **not** already installed, so as to _minimize output cluttering_.
 
    1. Otherwise, run `epm:install` to perform a _metadata-driven install_ within `working-directory`.
 
