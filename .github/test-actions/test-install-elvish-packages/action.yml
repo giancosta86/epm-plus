@@ -54,7 +54,7 @@ runs:
         var expected-tag = '${{ env.expected-tag }}'
 
         if (eq $git-tag $expected-tag) {
-          echo ✅The installed package is on the $expected-tag tag, as expected!
+          echo ✅The installed package is at the $expected-tag tag, as expected!
         } else {
           fail 'Current Git tag instead of '$expected-tag': '$git-tag
         }
@@ -115,7 +115,7 @@ runs:
             github.com/giancosta86/primrose@v1
           ]
           &devDependencies=[
-            github.com/giancosta86/velvet@v4
+            github.com/giancosta86/velvet@v2
             github.com/giancosta86/astral-bridge
           ]
         ] |
@@ -136,8 +136,8 @@ runs:
         epm-plus:patch-epm
 
         all [
-          github.com/giancosta86/velvet@v4
-          github.com/giancosta86/primrose@v1
+        github.com/giancosta86/primrose@v1
+          github.com/giancosta86/velvet@v2
           github.com/giancosta86/astral-bridge
         ] |
           each { |package|
