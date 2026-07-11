@@ -1,0 +1,146 @@
+name: Test install-elvish-packages
+description: Tests for install-elvish-packages.
+
+runs:
+  using: composite
+  steps:
+    - shell: elvish {0}
+      run: |
+        use epm
+        use os
+
+        echo 🎭 Setting up the environment variables for the tests...
+
+        var velvet-path = (epm:metadata 'github.com/giancosta86/velvet')[dst]
+
+        {
+          echo velvet-path=$velvet-path
+
+          echo expected-tag=v3.6.0
+
+          echo temp-project-directory=(os:temp-dir)
+        } >> (get-env GITHUB_ENV)
+
+    - shell: elvish {0}
+      run: echo 🎭 Installing the Velvet package from the main branch...
+
+    - uses: ./actions/install-elvish-packages
+      with:
+        packages: github.com/giancosta86/velvet
+
+    - shell: elvish {0}
+      working-directory: ${{ env.velvet-path }}
+      run: |
+        var git-branch = (git branch --show-current)
+
+        if (eq $git-branch main) {
+          echo ✅ The installed package is on the main branch, as expected!
+        } else {
+          fail 'Current Git branch instead of main: '$git-branch
+        }
+
+    - shell: elvish {0}
+      run: echo 🎭 Installing Velvet at tag ${{ env.expected-tag }}...
+
+    - uses: ./actions/install-elvish-packages
+      with:
+        packages: github.com/giancosta86/velvet@${{ env.expected-tag }}
+
+    - shell: elvish {0}
+      working-directory: ${{ env.velvet-path }}/${{ env.expected-tag }}
+      run: |
+        var git-tag = (git describe --tags --always)
+
+        var expected-tag = '${{ env.expected-tag }}'
+
+        if (eq $git-tag $expected-tag) {
+          echo ✅The installed package is on the $expected-tag tag, as expected!
+        } else {
+          fail 'Current Git tag instead of '$expected-tag': '$git-tag
+        }
+
+    - shell: elvish {0}
+      run: echo 🎭 Installing multiple packages...
+
+    - uses: ./actions/install-elvish-packages
+      with:
+        packages: github.com/giancosta86/primrose, github.com/giancosta86/astral-bridge
+
+    - shell: elvish {0}
+      run: |
+        use epm
+
+        all [
+          primrose
+          astral-bridge
+        ] |
+          each { |package-name|
+            if (not (epm:is-installed github.com/giancosta86/$package-name)) {
+              fail $package-name' not installed!'
+            }
+          }
+
+        echo ✅ Multiple packages installed successfully!
+
+    - shell: elvish {0}
+      run: echo 🎭 Trying to re-install multiple packages...
+
+    - uses: ./actions/install-elvish-packages
+      with:
+        packages: github.com/giancosta86/primrose, github.com/giancosta86/astral-bridge
+
+    - shell: elvish {0}
+      run: |
+        echo ✅ Re-installation attempt performed!
+
+    - shell: elvish {0}
+      run: echo 🎭 Performing a metadata-based install...
+
+    - shell: elvish {0}
+      working-directory: ${{ env.temp-project-directory }}
+      run: |
+        use epm
+
+        all [
+          github.com/giancosta86/ethereal
+          github.com/giancosta86/velvet
+          github.com/giancosta86/primrose
+          github.com/giancosta86/astral-bridge
+        ] |
+          each $epm:uninstall~
+
+        put [
+          &description='Test project'
+          &dependencies=[
+            github.com/giancosta86/primrose@v1
+          ]
+          &devDependencies=[
+            github.com/giancosta86/velvet@v4
+            github.com/giancosta86/astral-bridge
+          ]
+        ] |
+          to-json > metadata.json
+
+    - uses: ./actions/install-elvish-packages
+      with:
+        working-directory: ${{ env.temp-project-directory }}
+
+    - shell: elvish {0}
+      run: |
+        use epm
+        use github.com/giancosta86/epm-plus/epm-plus
+
+        epm-plus:patch-epm
+
+        all [
+          github.com/giancosta86/velvet@v4
+          github.com/giancosta86/primrose@v1
+          github.com/giancosta86/astral-bridge
+        ] |
+          each { |package|
+            if (not (epm:is-installed $package)) {
+              fail 'Missing package: '$package
+            }
+        }
+
+        echo ✅ All metadata-based packages installed!

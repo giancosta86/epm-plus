@@ -8,10 +8,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  verify:
+  verify-library:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: elves/setup-elvish@v1
         with:
@@ -20,3 +20,26 @@ jobs:
       - shell: bash
         run: |
           elvish verify.elv
+
+  verify-github-action:
+    runs-on: ubuntu-24.04
+    needs:
+      - verify-library
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: elves/setup-elvish@v1
+        with:
+          elvish-version: 0.21.0
+
+      - uses: ./.github/test-actions/test-install-elvish-packages
+
+  verify:
+    runs-on: ubuntu-24.04
+    needs:
+      - verify-github-action
+
+    steps:
+      - shell: bash
+        run: |
+          echo '✅ All tests OK!'
