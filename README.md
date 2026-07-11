@@ -131,7 +131,7 @@ By default, the symlink is named like the **major** version (e.g.: **v2**) - but
 
 ## Installing packages in GitHub Actions
 
-To easily install Elvish packages from within GitHub Actions with the advanced notation provided by **epm-plus**, please refer to the [action documentation](actions/install-elvish-packages/README.md).
+To seamlessly install Elvish packages from within GitHub Actions with the advanced notation provided by **epm-plus**, please refer to the [action documentation](actions/install-elvish-packages/README.md).
 
 ## Credits
 
