@@ -94,7 +94,7 @@ runs:
         echo ✅ Re-installation attempt performed!
 
     - shell: elvish {0}
-      run: echo 🎭 Setting up a metadata-based install...
+      run: echo 🎭 Setting up a metadata-driven install...
 
     - shell: elvish {0}
       working-directory: ${{ env.temp-project-directory }}
@@ -122,7 +122,7 @@ runs:
           to-json > metadata.json
 
     - shell: elvish {0}
-      run: echo 🎭 Performing a metadata-based install...
+      run: echo 🎭 Performing a metadata-driven install...
 
     - uses: ./actions/install-elvish-packages
       with:
@@ -146,4 +146,4 @@ runs:
             }
         }
 
-        echo ✅ All metadata-based packages installed!
+        echo ✅ All metadata-driven packages installed!
