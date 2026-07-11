@@ -1,0 +1,49 @@
+name: Install Elvish packages
+description: Installs packages for the Elvish shell, supporting the extended format introduced by epm-plus.
+
+inputs:
+  packages:
+    description: Comma-separated `<name>[@<version>]` packages to install.
+
+  working-directory:
+    description: Directory containing **metadata.json**, if `packages` is empty.
+    default: .
+
+runs:
+  using: composite
+  steps:
+    - shell: elvish {0}
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        use epm
+        use str
+
+        if (not (epm:is-installed github.com/giancosta86/epm-plus)) {
+          epm:install github.com/giancosta86/epm-plus
+        }
+
+        use github.com/giancosta86/epm-plus/epm-plus
+
+        epm-plus:patch-epm
+
+        var packages = [(
+          get-env packages |
+            str:split , (all) |
+            each $str:trim-space~ |
+            keep-if { |entry| not-eq $entry '' }
+        )]
+
+        if (eq $packages []) {
+          epm:install
+        } else {
+          var actual-packages = [(
+            all $packages |
+              keep-if { |package| not (epm:is-installed $package) }
+          )]
+
+          if (not-eq $actual-packages []) {
+            epm:install $@actual-packages
+          }
+        }
+      env:
+        packages: ${{ inputs.packages }}

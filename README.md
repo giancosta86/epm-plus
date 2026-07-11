@@ -6,6 +6,8 @@ _Package versioning for epm in Elvish_
 
 **epm-plus** is a tiny library designed to support _multiple coexisting versions_ of Elvish packages - especially from _Git repositories_ - following the simple set of rules described below; the changes introduced are _fully backwards-compatible_, enabling users to _choose their favorite versioning style_.
 
+Last but not least, a [GitHub action](actions/install-elvish-packages/README.md) is available.
+
 ## Installation
 
 As usual, the package can be downloaded via `epm`:
@@ -126,6 +128,10 @@ More in detail, the **package path** is provided by the _Git origin url_, wherea
 By default, the symlink is named like the **major** version (e.g.: **v2**) - but the full version (e.g.: **v2.7.1**) can be used instead, via the `full-version` flag.
 
 **Please, note**: although this command creates a symlink, you'll also need to _reload the in-memory module instance_ after any change - for example, by restarting the Elvish shell.
+
+## Installing packages in GitHub Actions
+
+To seamlessly install Elvish packages from within GitHub Actions with the advanced notation provided by **epm-plus**, please refer to the [action documentation](actions/install-elvish-packages/README.md).
 
 ## Credits
 
