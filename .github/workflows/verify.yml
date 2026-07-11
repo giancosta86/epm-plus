@@ -13,9 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: elves/setup-elvish@v1
-        with:
-          elvish-version: 0.21.0
+      - shell: bash
+        run: curl -so - https://dl.elv.sh/linux-amd64/elvish-v0.21.0.tar.gz | tar -xzC /usr/local/bin
 
       - shell: bash
         run: |
@@ -28,9 +27,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: elves/setup-elvish@v1
-        with:
-          elvish-version: 0.21.0
+      - shell: bash
+        run: curl -so - https://dl.elv.sh/linux-amd64/elvish-v0.21.0.tar.gz | tar -xzC /usr/local/bin
 
       - uses: ./.github/test-actions/test-install-elvish-packages
 
