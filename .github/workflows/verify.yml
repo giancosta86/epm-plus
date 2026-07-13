@@ -17,10 +17,9 @@ jobs:
         run: curl -so - https://dl.elv.sh/linux-amd64/elvish-v0.21.0.tar.gz | tar -xzC /usr/local/bin
 
       - shell: bash
-        run: |
-          elvish verify.elv
+        run: elvish verify.elv
 
-  verify-github-action:
+  verify-github-actions:
     runs-on: ubuntu-24.04
     needs:
       - verify-library
@@ -35,7 +34,7 @@ jobs:
   verify:
     runs-on: ubuntu-24.04
     needs:
-      - verify-github-action
+      - verify-github-actions
 
     steps:
       - shell: bash

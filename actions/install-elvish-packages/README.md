@@ -6,7 +6,7 @@ Installs packages for the **Elvish** shell, supporting the extended format intro
 
 ```yaml
 steps:
-  - uses: giancosta86/epm-plus/actions/install-elvish-packages@main
+  - uses: giancosta86/epm-plus/actions/install-elvish-packages@v1
     with:
       packages: github.com/giancosta86/primrose@v1, github.com/giancosta86/astral-bridge@v1
 ```
