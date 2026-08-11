@@ -29,18 +29,10 @@ runs:
       with:
         packages: github.com/giancosta86/velvet@${{ env.expected-tag }}
 
-    - shell: elvish {0}
-      working-directory: ${{ env.velvet-dir }}/${{ env.expected-tag }}
-      run: |
-        var git-tag = (git describe --tags --always)
-
-        var expected-tag = '${{ env.expected-tag }}'
-
-        if (eq $git-tag $expected-tag) {
-          echo ✅The installed package is at the $expected-tag tag, as expected!
-        } else {
-          fail 'Current Git tag instead of '$expected-tag': '$git-tag
-        }
+    - uses: giancosta86/aurora-github/actions/run-elvish-tests@v11
+      with:
+        working-directory: ${{ github.action_path }}
+        velvet-scripts: check-tag
 
     - shell: elvish {0}
       run: echo 🎭 Installing multiple packages...
