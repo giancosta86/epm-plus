@@ -4,22 +4,11 @@ description: Tests for install-elvish-packages.
 runs:
   using: composite
   steps:
-    - shell: elvish {0}
-      run: |
-        use epm
-        use os
+    - uses: giancosta86/gauntlet/actions/setup-elvish-action@v1
 
-        echo 🎭 Setting up the environment variables for the tests...
-
-        var velvet-path = (epm:metadata 'github.com/giancosta86/velvet')[dst]
-
-        {
-          echo velvet-path=$velvet-path
-
-          echo expected-tag=v3.6.0
-
-          echo temp-project-directory=(os:temp-dir)
-        } >> (get-env GITHUB_ENV)
+    - shell: bash
+      working-directory: ${{ github.action_path }}
+      run: elvish setup.elv
 
     - shell: elvish {0}
       run: echo 🎭 Installing the Velvet package from the main branch...
@@ -28,16 +17,10 @@ runs:
       with:
         packages: github.com/giancosta86/velvet
 
-    - shell: elvish {0}
-      working-directory: ${{ env.velvet-path }}
-      run: |
-        var git-branch = (git branch --show-current)
-
-        if (eq $git-branch main) {
-          echo ✅ The installed package is on the main branch, as expected!
-        } else {
-          fail 'Current Git branch instead of main: '$git-branch
-        }
+    - uses: giancosta86/aurora-github/actions/run-elvish-tests@v11
+      with:
+        working-directory: ${{ github.action_path }}
+        velvet-scripts: check-main
 
     - shell: elvish {0}
       run: echo 🎭 Installing Velvet at tag ${{ env.expected-tag }}...
@@ -46,18 +29,10 @@ runs:
       with:
         packages: github.com/giancosta86/velvet@${{ env.expected-tag }}
 
-    - shell: elvish {0}
-      working-directory: ${{ env.velvet-path }}/${{ env.expected-tag }}
-      run: |
-        var git-tag = (git describe --tags --always)
-
-        var expected-tag = '${{ env.expected-tag }}'
-
-        if (eq $git-tag $expected-tag) {
-          echo ✅The installed package is at the $expected-tag tag, as expected!
-        } else {
-          fail 'Current Git tag instead of '$expected-tag': '$git-tag
-        }
+    - uses: giancosta86/aurora-github/actions/run-elvish-tests@v11
+      with:
+        working-directory: ${{ github.action_path }}
+        velvet-scripts: check-tag
 
     - shell: elvish {0}
       run: echo 🎭 Installing multiple packages...
@@ -66,21 +41,10 @@ runs:
       with:
         packages: github.com/giancosta86/primrose, github.com/giancosta86/astral-bridge
 
-    - shell: elvish {0}
-      run: |
-        use epm
-
-        all [
-          primrose
-          astral-bridge
-        ] |
-          each { |package-name|
-            if (not (epm:is-installed github.com/giancosta86/$package-name)) {
-              fail $package-name' not installed!'
-            }
-          }
-
-        echo ✅ Multiple packages installed successfully!
+    - uses: giancosta86/aurora-github/actions/run-elvish-tests@v11
+      with:
+        working-directory: ${{ github.action_path }}
+        velvet-scripts: check-multiple
 
     - shell: elvish {0}
       run: echo 🎭 Trying to re-install multiple packages...
@@ -93,57 +57,18 @@ runs:
       run: |
         echo ✅ Re-installation attempt performed!
 
-    - shell: elvish {0}
-      run: echo 🎭 Setting up a metadata-driven install...
-
-    - shell: elvish {0}
-      working-directory: ${{ env.temp-project-directory }}
-      run: |
-        use epm
-
-        all [
-          github.com/giancosta86/ethereal
-          github.com/giancosta86/velvet
-          github.com/giancosta86/primrose
-          github.com/giancosta86/astral-bridge
-        ] |
-          each $epm:uninstall~
-
-        put [
-          &description='Test project'
-          &dependencies=[
-            github.com/giancosta86/primrose@v1
-          ]
-          &devDependencies=[
-            github.com/giancosta86/velvet@v2
-            github.com/giancosta86/astral-bridge
-          ]
-        ] |
-          to-json > metadata.json
+    - shell: bash
+      working-directory: ${{ github.action_path }}
+      run: elvish setup-metadata.elv
 
     - shell: elvish {0}
       run: echo 🎭 Performing a metadata-driven install...
 
     - uses: ./actions/install-elvish-packages
       with:
-        working-directory: ${{ env.temp-project-directory }}
+        working-directory: ${{ env.temp-project-dir }}
 
-    - shell: elvish {0}
-      run: |
-        use epm
-        use github.com/giancosta86/epm-plus/epm-plus
-
-        epm-plus:patch-epm
-
-        all [
-        github.com/giancosta86/primrose@v1
-          github.com/giancosta86/velvet@v2
-          github.com/giancosta86/astral-bridge
-        ] |
-          each { |package|
-            if (not (epm:is-installed $package)) {
-              fail 'Missing package: '$package
-            }
-        }
-
-        echo ✅ All metadata-driven packages installed!
+    - uses: giancosta86/aurora-github/actions/run-elvish-tests@v11
+      with:
+        working-directory: ${{ github.action_path }}
+        velvet-scripts: check-metadata-driven

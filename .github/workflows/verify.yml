@@ -12,12 +12,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-
-      - shell: bash
-        run: curl -so - https://dl.elv.sh/linux-amd64/elvish-v0.21.0.tar.gz | tar -xzC /usr/local/bin
-
-      - shell: bash
-        run: elvish verify.elv
+      - uses: giancosta86/aurora-github/actions/verify-elvish-package@v11
 
   verify-github-actions:
     runs-on: ubuntu-24.04
@@ -25,17 +20,16 @@ jobs:
       - verify-library
     steps:
       - uses: actions/checkout@v7
-
-      - shell: bash
-        run: curl -so - https://dl.elv.sh/linux-amd64/elvish-v0.21.0.tar.gz | tar -xzC /usr/local/bin
-
       - uses: ./.github/test-actions/test-install-elvish-packages
 
   verify:
+    if: always()
     runs-on: ubuntu-24.04
     needs:
+      - verify-library
       - verify-github-actions
-
     steps:
-      - shell: bash
-        run: echo '✅ All tests OK!'
+      - uses: actions/checkout@v7
+      - uses: giancosta86/aurora-github/actions/check-required-jobs@v11
+        with:
+          needs-as-json: ${{ toJSON(needs) }}
