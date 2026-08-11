@@ -6,22 +6,8 @@ runs:
   steps:
     - uses: giancosta86/gauntlet/actions/setup-elvish-action@v1
 
-    - shell: elvish {0}
-      run: |
-        use epm
-        use os
-
-        echo 🎭 Setting up the environment variables for the tests...
-
-        var velvet-path = (epm:metadata 'github.com/giancosta86/velvet')[dst]
-
-        {
-          echo velvet-path=$velvet-path
-
-          echo expected-tag=v3.6.0
-
-          echo temp-project-directory=(os:temp-dir)
-        } >> (get-env GITHUB_ENV)
+    - shell: bash
+      run: elvish setup.elv
 
     - shell: elvish {0}
       run: echo 🎭 Installing the Velvet package from the main branch...
@@ -31,7 +17,7 @@ runs:
         packages: github.com/giancosta86/velvet
 
     - shell: elvish {0}
-      working-directory: ${{ env.velvet-path }}
+      working-directory: ${{ env.velvet-dir }}
       run: |
         var git-branch = (git branch --show-current)
 
@@ -49,7 +35,7 @@ runs:
         packages: github.com/giancosta86/velvet@${{ env.expected-tag }}
 
     - shell: elvish {0}
-      working-directory: ${{ env.velvet-path }}/${{ env.expected-tag }}
+      working-directory: ${{ env.velvet-dir }}/${{ env.expected-tag }}
       run: |
         var git-tag = (git describe --tags --always)
 
