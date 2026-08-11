@@ -57,9 +57,6 @@ runs:
       run: |
         echo ✅ Re-installation attempt performed!
 
-    - shell: elvish {0}
-      run: echo 🎭 Setting up a metadata-driven install...
-
     - shell: bash
       working-directory: ${{ github.action_path }}
       run: elvish setup-metadata.elv

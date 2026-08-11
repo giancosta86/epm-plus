@@ -1,5 +1,7 @@
 use epm
 
+echo 🎭 Setting up a metadata-driven install...
+
 cd (get-env temp-project-dir)
 
 all [
