@@ -1,4 +1,6 @@
-tmp pwd = (get-env velvet-dir)
+>> 'Git version for Velvet' {
+  tmp pwd = (get-env velvet-dir)
 
-git branch --show-current |
-  should-be main
+  git branch --show-current |
+    should-be main
+}
