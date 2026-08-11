@@ -4,6 +4,8 @@ description: Tests for install-elvish-packages.
 runs:
   using: composite
   steps:
+    - uses: giancosta86/gauntlet/actions/setup-elvish-action@v1
+
     - shell: elvish {0}
       run: |
         use epm
