@@ -5,7 +5,7 @@ epm-plus:patch-epm
 
 >> 'After performing a metadata-driven install' {
   all [
-  github.com/giancosta86/primrose@v1
+    github.com/giancosta86/primrose@v1
     github.com/giancosta86/velvet@v2
     github.com/giancosta86/astral-bridge
   ] |
