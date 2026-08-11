@@ -15,5 +15,5 @@ env:map [
 
   &expected-tag=v3.6.0
 
-  &temp-project-directory=(os:temp-dir)
+  &temp-project-dir=(os:temp-dir)
 ]
