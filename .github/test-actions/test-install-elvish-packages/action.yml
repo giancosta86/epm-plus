@@ -17,16 +17,10 @@ runs:
       with:
         packages: github.com/giancosta86/velvet
 
-    - shell: elvish {0}
-      working-directory: ${{ env.velvet-dir }}
-      run: |
-        var git-branch = (git branch --show-current)
-
-        if (eq $git-branch main) {
-          echo ✅ The installed package is on the main branch, as expected!
-        } else {
-          fail 'Current Git branch instead of main: '$git-branch
-        }
+    - uses: giancosta86/aurora-github/actions/run-elvish-tests@v11
+      with:
+        working-directory: ${{ github.action_path }}
+        velvet-scripts: check-main
 
     - shell: elvish {0}
       run: echo 🎭 Installing Velvet at tag ${{ env.expected-tag }}...
