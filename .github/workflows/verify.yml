@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - uses: giancosta86/aurora-github/actions/verify-elvish-package@v11
+      - uses: giancosta86/aurora-github/actions/verify-elvish-package@v12
 
   verify-github-actions:
     runs-on: ubuntu-24.04
@@ -28,6 +28,6 @@ jobs:
       - verify-github-actions
     steps:
       - uses: actions/checkout@v7
-      - uses: giancosta86/aurora-github/actions/check-required-jobs@v11
+      - uses: giancosta86/aurora-github/actions/check-required-jobs@v12
         with:
           needs-as-json: ${{ toJSON(needs) }}
